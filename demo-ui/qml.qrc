@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Page_main.qml</file>
+        <file>icons/logo_44x44.png</file>
+        <file>Qml_widget/Listview_heigh_light_type.qml</file>
+        <file>Qml_widget/SimpleButton.qml</file>
+        <file>Qml_widget/Str_button.qml</file>
+        <file>Qml_widget/Title_row.qml</file>
+        <file>Page_middleware.qml</file>
+        <file>icons/left.png</file>
+        <file>Page_data_engine.qml</file>
+        <file>icons/rect_empty.png</file>
+        <file>icons/rect_select.png</file>
+        <file>Page_data_vehicle.qml</file>
+        <file>Data_source.qml</file>
+        <file>Qml_widget/SimpleMessageBox.qml</file>
+    </qresource>
+</RCC>
