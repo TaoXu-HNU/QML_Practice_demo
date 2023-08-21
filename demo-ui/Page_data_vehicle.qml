@@ -70,393 +70,202 @@ Item {
                     onClicked: {           //点击菜单子栏也高亮显示并触发选择的信号，效果等同于勾选按钮
                         if( index === 0 )
                         {
-                            /**** 特殊处理：在"选择状态"下的 重复勾选 的点击事件 ****/
-                            if( select_data_btn_clicked_flag && oil_btn.picked ){
-                                //勾选状态下，再次点击 将弹出警告的对话框
-                                var cmp_item00 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                                popup_select = cmp_item00.createObject( switch_area,
-                                                                        {
-                                                                         "list_width" : 500,
-                                                                         "title"      :"当前项已在首页显示，不可重复添加",
-                                                                         "left_tail"  :"查看",
-                                                                         "right_tail" :"取消"
-                                                                        });
-                                popup_select.left_tail_clicked.connect( back_page_main_slot );
-                                popup_select.right_tail_clicked.connect( cancel_slot );
+                            oil_btn.picked = !oil_btn.picked
 
-                            }
+                            if(oil_btn.picked)   //勾选后向列表中增加内容
+                            {
+                                if(replace_flag){   //进入替换功能
 
-                            /**** 特殊处理：在"替换状态"下的 重复勾选 的点击事件 ****/
-                            else if( replace_flag && oil_btn.picked ){
-                                //勾选状态下，再次点击 将弹出警告的对话框
-                                var cmp_item01 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                                popup_select = cmp_item01.createObject( switch_area,
-                                                                        {
-                                                                         "list_width" : 500,
-                                                                         "title"      :"当前项已在首页显示，不可替换",
-                                                                         "left_tail"  :"查看",
-                                                                         "right_tail" :"取消"
-                                                                        });
-                                popup_select.left_tail_clicked.connect( back_page_main_slot );
-                                popup_select.right_tail_clicked.connect( cancel_slot );
+                                    /*** 替换逻辑：删除原内容->原位置插入新内容->修改新内容对应的刷新位置->取消原勾选项->清除替换按钮的标志位 ***/
+                                    param_list_model.remove( current_item_row )  //删除 Page_main.qml中当前行的内容
 
-                            }
+                                    param_list_model.insert( current_item_row, {name: "油量",  value: data_oil_cache, unit: "L"}) //插入新的内容
 
-                            /**** 正常的点击事件 ****/
-                            else{
+                                    oil_row_position = current_item_row  //设置 新内容 的 刷新位置 为原位置，很重要！否则替换后无法刷新 数据
 
-                                oil_btn.picked = !oil_btn.picked
+                                    //取消当前行原有的 勾选属性
+                                    switch(current_item_name){
+                                        case "续航": odom_btn.picked = !odom_btn.picked;
+                                                    select_odom_flag = !select_odom_flag;   break;
 
-                                //勾选状态
-                                if(oil_btn.picked)
-                                {
-                                    //进入替换功能
-                                    if(replace_flag){
+                                        case "速度": speed_btn.picked = !speed_btn.picked;
+                                                    select_speed_flag = !select_speed_flag; break;
 
-                                        /*** 替换逻辑：删除原内容->原位置插入新内容->修改新内容对应的刷新位置->取消原勾选项->清除替换按钮的标志位 ***/
-                                        param_list_model.remove( current_item_row )  //删除 Page_main.qml中当前行的内容
+                                        case "发动机转速": var cmp_rpm_clickedItem0 = Qt.createComponent( "qrc:/Page_data_engine.qml" ) //创建组件
+                                                         var vehicle_page_rpm_clickedItem0 = cmp_rpm_clickedItem0.createObject( switch_area )  //创建对象
 
-                                        param_list_model.insert( current_item_row, {name: "油量",  value: data_oil_cache, unit: "L"}) //插入新的内容
+                                                         vehicle_page_rpm_clickedItem0.rpm_state = !vehicle_page_rpm_clickedItem0.rpm_state    //取消勾选状态
+                                                         select_rpm_flag = !select_rpm_flag;  //标志位也同步改变，防止下次进入时由于标志位未清零而强行改变勾选状态
 
-                                        oil_row_position = current_item_row  //设置 新内容 的 刷新位置 为原位置，很重要！否则替换后无法刷新 数据
+                                                         vehicle_page_rpm_clickedItem0.destroy(); break;   //操作完成后，需要进行销毁释放
 
-                                        //取消当前行原有的 勾选属性
-                                        switch(current_item_name){
-                                            case "续航": odom_btn.picked = !odom_btn.picked;
-                                                        select_odom_flag = !select_odom_flag;   break;
+                                        case "发动机档位": var cmp_gear_clickedItem0 = Qt.createComponent( "qrc:/Page_data_engine.qml" )
+                                                         var vehicle_page_gear_clickedItem0 = cmp_gear_clickedItem0.createObject( switch_area )
 
-                                            case "速度": speed_btn.picked = !speed_btn.picked;
-                                                        select_speed_flag = !select_speed_flag; break;
+                                                         vehicle_page_gear_clickedItem0.gear_state = !vehicle_page_gear_clickedItem0.gear_state
+                                                         select_gear_flag = !select_gear_flag;
 
-                                            case "发动机转速": var cmp_rpm_clickedItem0 = Qt.createComponent( "qrc:/Page_data_engine.qml" ) //创建组件
-                                                             var vehicle_page_rpm_clickedItem0 = cmp_rpm_clickedItem0.createObject( switch_area )  //创建对象
+                                                         vehicle_page_gear_clickedItem0.destroy(); break;
 
-                                                             vehicle_page_rpm_clickedItem0.rpm_state = !vehicle_page_rpm_clickedItem0.rpm_state    //取消勾选状态
-                                                             select_rpm_flag = !select_rpm_flag;  //标志位也同步改变，防止下次进入时由于标志位未清零而强行改变勾选状态
+                                        case "发动机温度": var cmp_temp_clickedItem0 = Qt.createComponent( "qrc:/Page_data_engine.qml" )
+                                                         var vehicle_page_temp_clickedItem0 = cmp_temp_clickedItem0.createObject( switch_area )
 
-                                                             vehicle_page_rpm_clickedItem0.destroy(); break;   //操作完成后，需要进行销毁释放
+                                                         vehicle_page_temp_clickedItem0.temp_state = !vehicle_page_temp_clickedItem0.temp_state
+                                                         select_temp_flag = !select_temp_flag;
 
-                                            case "发动机档位": var cmp_gear_clickedItem0 = Qt.createComponent( "qrc:/Page_data_engine.qml" )
-                                                             var vehicle_page_gear_clickedItem0 = cmp_gear_clickedItem0.createObject( switch_area )
-
-                                                             vehicle_page_gear_clickedItem0.gear_state = !vehicle_page_gear_clickedItem0.gear_state
-                                                             select_gear_flag = !select_gear_flag;
-
-                                                             vehicle_page_gear_clickedItem0.destroy(); break;
-
-                                            case "发动机温度": var cmp_temp_clickedItem0 = Qt.createComponent( "qrc:/Page_data_engine.qml" )
-                                                             var vehicle_page_temp_clickedItem0 = cmp_temp_clickedItem0.createObject( switch_area )
-
-                                                             vehicle_page_temp_clickedItem0.temp_state = !vehicle_page_temp_clickedItem0.temp_state
-                                                             select_temp_flag = !select_temp_flag;
-
-                                                             vehicle_page_temp_clickedItem0.destroy(); break;
-                                        }
-
-                                        //替换完成后，弹出提示框
-                                        var cmp_item02 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                                        popup_select = cmp_item02.createObject( switch_area,
-                                                                                {
-                                                                                 "list_width" : 400,
-                                                                                 "title"      :"成功替换！",
-                                                                                 "left_tail"  :"",
-                                                                                 "right_tail" :"查看"
-                                                                                });
-
-                                        popup_select.right_tail_clicked.connect( back_page_main_slot );
+                                                         vehicle_page_temp_clickedItem0.destroy(); break;
                                     }
 
-                                    //进入添加功能
-                                    else{
-
-                                        param_list_model.append({"name": "油量",  "value": 00, "unit": "L"})
-
-                                        count_num = count_num + 1
-                                        oil_row_position = count_num
-                                        console.log(oil_row_position)
-
-                                        //添加完成后，弹出提示框
-                                        var cmp_item03 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                                        popup_select = cmp_item03.createObject( switch_area,
-                                                                                {
-                                                                                 "list_width" : 400,
-                                                                                 "title"      :"成功添加！",
-                                                                                 "left_tail"  :"继续添加",
-                                                                                 "right_tail" :"返回主页"
-                                                                                });
-                                        popup_select.left_tail_clicked.connect(  continue_add_slot   );
-                                        popup_select.right_tail_clicked.connect( back_page_main_slot );
-                                    }
+                                    replace_flag = false  //恢复 替换按钮 的标志位
                                 }
 
-                                //未勾选状态，删除显示
-                                else
-                                {
-                                    delete_oil()  //删除该行内容
-                                }
+                                else{       //进入添加功能
 
-                                select_oil()     //勾选，发送信号
+                                    param_list_model.append({"name": "油量",  "value": 00, "unit": "L"})
+
+                                    count_num = count_num + 1
+                                    oil_row_position = count_num
+                                    console.log(oil_row_position)
+                                }
                             }
+                            else
+                            {
+                                delete_oil()  //删除该行内容
+                            }
+
+                            select_oil()     //勾选，发送信号
                         }
-
                         else if( index === 1 )
                         {
-                            /**** 特殊处理：在"选择状态"下的 重复勾选 的点击事件 ****/
-                            if( select_data_btn_clicked_flag && odom_btn.picked ){
-                                //勾选状态下，再次点击 将弹出警告的对话框
-                                var cmp_item10 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                                popup_select = cmp_item10.createObject( switch_area,
-                                                                        {
-                                                                         "list_width" : 500,
-                                                                         "title"      :"当前项已在首页显示，不可重复添加",
-                                                                         "left_tail"  :"查看",
-                                                                         "right_tail" :"取消"
-                                                                        });
-                                popup_select.left_tail_clicked.connect( back_page_main_slot );
-                                popup_select.right_tail_clicked.connect( cancel_slot );
+                            odom_btn.picked = !odom_btn.picked
 
-                            }
+                            if(odom_btn.picked)
+                            {
+                                if(replace_flag){   //进入替换功能
 
-                            /**** 特殊处理：在"替换状态"下的 重复勾选 的点击事件 ****/
-                            else if( replace_flag && odom_btn.picked ){
-                                //勾选状态下，再次点击 将弹出警告的对话框
-                                var cmp_item11 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                                popup_select = cmp_item11.createObject( switch_area,
-                                                                        {
-                                                                         "list_width" : 500,
-                                                                         "title"      :"当前项已在首页显示，不可替换",
-                                                                         "left_tail"  :"查看",
-                                                                         "right_tail" :"取消"
-                                                                        });
-                                popup_select.left_tail_clicked.connect( back_page_main_slot );
-                                popup_select.right_tail_clicked.connect( cancel_slot );
+                                    /*** 替换逻辑：删除原内容->原位置插入新内容->修改新内容对应的刷新位置->取消原勾选项->清除替换按钮的标志位 ***/
+                                    param_list_model.remove( current_item_row )  //删除 Page_main.qml中当前行的内容
 
-                            }
+                                    param_list_model.insert( current_item_row, {name: "续航",  value: data_odom_cache, unit: "km"}) //插入新的内容
 
-                            /**** 正常的点击事件 ****/
-                            else{
+                                    odom_row_position = current_item_row  //设置 新内容 的 刷新位置 为原位置，很重要！否则替换后无法刷新 数据
 
-                                odom_btn.picked = !odom_btn.picked
+                                    //取消当前行原有的 勾选属性
+                                    switch(current_item_name){
+                                        case "油量": oil_btn.picked = !oil_btn.picked;
+                                                         select_oil_flag = !select_oil_flag;   break;
 
-                                //勾选状态
-                                if(odom_btn.picked)
-                                {
-                                    //进入替换功能
-                                    if(replace_flag){
+                                        case "速度": speed_btn.picked = !speed_btn.picked;
+                                                         select_speed_flag = !select_speed_flag; break;
 
-                                        /*** 替换逻辑：删除原内容->原位置插入新内容->修改新内容对应的刷新位置->取消原勾选项->清除替换按钮的标志位 ***/
-                                        param_list_model.remove( current_item_row )  //删除 Page_main.qml中当前行的内容
+                                        case "发动机转速": var cmp_rpm_clickedItem1 = Qt.createComponent( "qrc:/Page_data_engine.qml" ) //创建组件
+                                                         var vehicle_page_rpm_clickedItem1 = cmp_rpm_clickedItem1.createObject( switch_area )  //创建对象
 
-                                        param_list_model.insert( current_item_row, {name: "续航",  value: data_odom_cache, unit: "km"}) //插入新的内容
+                                                         vehicle_page_rpm_clickedItem1.rpm_state = !vehicle_page_rpm_clickedItem1.rpm_state    //取消勾选状态
+                                                         select_rpm_flag = !select_rpm_flag;  //标志位也同步改变，防止下次进入时由于标志位未清零而强行改变勾选状态
 
-                                        odom_row_position = current_item_row  //设置 新内容 的 刷新位置 为原位置，很重要！否则替换后无法刷新 数据
+                                                         vehicle_page_rpm_clickedItem1.destroy(); break;   //操作完成后，需要进行销毁释放
 
-                                        //取消当前行原有的 勾选属性
-                                        switch(current_item_name){
-                                            case "油量": oil_btn.picked = !oil_btn.picked;
-                                                             select_oil_flag = !select_oil_flag;   break;
+                                        case "发动机档位": var cmp_gear_clickedItem1 = Qt.createComponent( "qrc:/Page_data_engine.qml" )
+                                                         var vehicle_page_gear_clickedItem1 = cmp_gear_clickedItem1.createObject( switch_area )
 
-                                            case "速度": speed_btn.picked = !speed_btn.picked;
-                                                             select_speed_flag = !select_speed_flag; break;
+                                                         vehicle_page_gear_clickedItem1.gear_state = !vehicle_page_gear_clickedItem1.gear_state
+                                                         select_gear_flag = !select_gear_flag;
 
-                                            case "发动机转速": var cmp_rpm_clickedItem1 = Qt.createComponent( "qrc:/Page_data_engine.qml" ) //创建组件
-                                                             var vehicle_page_rpm_clickedItem1 = cmp_rpm_clickedItem1.createObject( switch_area )  //创建对象
+                                                         vehicle_page_gear_clickedItem1.destroy(); break;
 
-                                                             vehicle_page_rpm_clickedItem1.rpm_state = !vehicle_page_rpm_clickedItem1.rpm_state    //取消勾选状态
-                                                             select_rpm_flag = !select_rpm_flag;  //标志位也同步改变，防止下次进入时由于标志位未清零而强行改变勾选状态
+                                        case "发动机温度": var cmp_temp_clickedItem1 = Qt.createComponent( "qrc:/Page_data_engine.qml" )
+                                                         var vehicle_page_temp_clickedItem1 = cmp_temp_clickedItem1.createObject( switch_area )
 
-                                                             vehicle_page_rpm_clickedItem1.destroy(); break;   //操作完成后，需要进行销毁释放
+                                                         vehicle_page_temp_clickedItem1.temp_state = !vehicle_page_temp_clickedItem1.temp_state
+                                                         select_temp_flag = !select_temp_flag;
 
-                                            case "发动机档位": var cmp_gear_clickedItem1 = Qt.createComponent( "qrc:/Page_data_engine.qml" )
-                                                             var vehicle_page_gear_clickedItem1 = cmp_gear_clickedItem1.createObject( switch_area )
-
-                                                             vehicle_page_gear_clickedItem1.gear_state = !vehicle_page_gear_clickedItem1.gear_state
-                                                             select_gear_flag = !select_gear_flag;
-
-                                                             vehicle_page_gear_clickedItem1.destroy(); break;
-
-                                            case "发动机温度": var cmp_temp_clickedItem1 = Qt.createComponent( "qrc:/Page_data_engine.qml" )
-                                                             var vehicle_page_temp_clickedItem1 = cmp_temp_clickedItem1.createObject( switch_area )
-
-                                                             vehicle_page_temp_clickedItem1.temp_state = !vehicle_page_temp_clickedItem1.temp_state
-                                                             select_temp_flag = !select_temp_flag;
-
-                                                             vehicle_page_temp_clickedItem1.destroy(); break;
-                                        }
-
-                                        //替换完成后，弹出提示框
-                                        var cmp_item12 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                                        popup_select = cmp_item12.createObject( switch_area,
-                                                                                {
-                                                                                 "list_width" : 400,
-                                                                                 "title"      :"成功替换！",
-                                                                                 "left_tail"  :"",
-                                                                                 "right_tail" :"查看"
-                                                                                });
-
-                                        popup_select.right_tail_clicked.connect( back_page_main_slot );
+                                                         vehicle_page_temp_clickedItem1.destroy(); break;
                                     }
 
-                                    //进入添加功能
-                                    else{
-                                        param_list_model.append({"name": "续航",  "value": 00, "unit": "km"})
-
-                                        count_num = count_num + 1
-                                        odom_row_position = count_num
-                                        console.log(odom_row_position)
-
-                                        //添加完成后，弹出提示框
-                                        var cmp_item13 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                                        popup_select = cmp_item13.createObject( switch_area,
-                                                                                {
-                                                                                 "list_width" : 400,
-                                                                                 "title"      :"成功添加！",
-                                                                                 "left_tail"  :"继续添加",
-                                                                                 "right_tail" :"返回主页"
-                                                                                });
-                                        popup_select.left_tail_clicked.connect(  continue_add_slot   );
-                                        popup_select.right_tail_clicked.connect( back_page_main_slot );
-                                    }
+                                    replace_flag = false  //恢复 替换按钮 的标志位
                                 }
 
-                                //未勾选，删除显示
-                                else
-                                {
-                                    delete_odom()
-                                }
+                                else{       //进入添加功能
+                                    param_list_model.append({"name": "续航",  "value": 00, "unit": "km"})
 
-                                select_odom()
+                                    count_num = count_num + 1
+                                    odom_row_position = count_num
+                                    console.log(odom_row_position)
+                                }
                             }
+                            else
+                            {
+                                delete_odom()
+                            }
+
+                            select_odom()
                         }
-
-                        //点击第三行的内容
                         else
                         {
-                            /**** 特殊处理：在"选择状态"下的 重复勾选 的点击事件 ****/
-                            if( select_data_btn_clicked_flag && speed_btn.picked ){
-                                //勾选状态下，再次点击 将弹出警告的对话框
-                                var cmp_item20 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                                popup_select = cmp_item20.createObject( switch_area,
-                                                                        {
-                                                                         "list_width" : 500,
-                                                                         "title"      :"当前项已在首页显示，不可重复添加",
-                                                                         "left_tail"  :"查看",
-                                                                         "right_tail" :"取消"
-                                                                        });
-                                popup_select.left_tail_clicked.connect( back_page_main_slot );
-                                popup_select.right_tail_clicked.connect( cancel_slot );
+                            speed_btn.picked = !speed_btn.picked
 
-                            }
+                            if(speed_btn.picked)
+                            {
+                                if(replace_flag){   //进入替换功能
 
-                            /**** 特殊处理：在"替换状态"下的 重复勾选 的点击事件 ****/
-                            else if( replace_flag && speed_btn.picked ){
-                                //勾选状态下，再次点击 将弹出警告的对话框
-                                var cmp_item21 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                                popup_select = cmp_item21.createObject( switch_area,
-                                                                        {
-                                                                         "list_width" : 500,
-                                                                         "title"      :"当前项已在首页显示，不可替换",
-                                                                         "left_tail"  :"查看",
-                                                                         "right_tail" :"取消"
-                                                                        });
-                                popup_select.left_tail_clicked.connect( back_page_main_slot );
-                                popup_select.right_tail_clicked.connect( cancel_slot );
+                                    /*** 替换逻辑：删除原内容->原位置插入新内容->修改新内容对应的刷新位置->取消原勾选项->清除替换按钮的标志位 ***/
+                                    param_list_model.remove( current_item_row )  //删除 Page_main.qml中当前行的内容
 
-                            }
+                                    param_list_model.insert( current_item_row, {name: "速度",  value: data_speed_cache, unit: "km/h"}) //插入新的内容
 
-                            /**** 正常的点击事件 ****/
-                            else{
+                                    speed_row_position = current_item_row  //设置 新内容 的 刷新位置 为原位置，很重要！否则替换后无法刷新 数据
 
-                                speed_btn.picked = !speed_btn.picked
+                                    //取消当前行原有的 勾选属性
+                                    switch(current_item_name){
+                                        case "油量": oil_btn.picked = !oil_btn.picked;
+                                                         select_oil_flag = !select_oil_flag;   break;
 
-                                //勾选状态
-                                if(speed_btn.picked)
-                                {
-                                    //进入替换功能
-                                    if(replace_flag){
+                                        case "续航": odom_btn.picked = !odom_btn.picked;
+                                                         select_odom_flag = !select_odom_flag; break;
 
-                                        /*** 替换逻辑：删除原内容->原位置插入新内容->修改新内容对应的刷新位置->取消原勾选项->清除替换按钮的标志位 ***/
-                                        param_list_model.remove( current_item_row )  //删除 Page_main.qml中当前行的内容
+                                        case "发动机转速": var cmp_rpm_clickedItem2 = Qt.createComponent( "qrc:/Page_data_engine.qml" ) //创建组件
+                                                         var vehicle_page_rpm_clickedItem2 = cmp_rpm_clickedItem2.createObject( switch_area )  //创建对象
 
-                                        param_list_model.insert( current_item_row, {name: "速度",  value: data_speed_cache, unit: "km/h"}) //插入新的内容
+                                                         vehicle_page_rpm_clickedItem2.rpm_state = !vehicle_page_rpm_clickedItem2.rpm_state    //取消勾选状态
+                                                         select_rpm_flag = !select_rpm_flag;  //标志位也同步改变，防止下次进入时由于标志位未清零而强行改变勾选状态
 
-                                        speed_row_position = current_item_row  //设置 新内容 的 刷新位置 为原位置，很重要！否则替换后无法刷新 数据
+                                                         vehicle_page_rpm_clickedItem2.destroy(); break;   //操作完成后，需要进行销毁释放
 
-                                        //取消当前行原有的 勾选属性
-                                        switch(current_item_name){
-                                            case "油量": oil_btn.picked = !oil_btn.picked;
-                                                             select_oil_flag = !select_oil_flag;   break;
+                                        case "发动机档位": var cmp_gear_clickedItem2 = Qt.createComponent( "qrc:/Page_data_engine.qml" )
+                                                         var vehicle_page_gear_clickedItem2 = cmp_gear_clickedItem2.createObject( switch_area )
 
-                                            case "续航": odom_btn.picked = !odom_btn.picked;
-                                                             select_odom_flag = !select_odom_flag; break;
+                                                         vehicle_page_gear_clickedItem2.gear_state = !vehicle_page_gear_clickedItem2.gear_state
+                                                         select_gear_flag = !select_gear_flag;
 
-                                            case "发动机转速": var cmp_rpm_clickedItem2 = Qt.createComponent( "qrc:/Page_data_engine.qml" ) //创建组件
-                                                             var vehicle_page_rpm_clickedItem2 = cmp_rpm_clickedItem2.createObject( switch_area )  //创建对象
+                                                         vehicle_page_gear_clickedItem2.destroy(); break;
 
-                                                             vehicle_page_rpm_clickedItem2.rpm_state = !vehicle_page_rpm_clickedItem2.rpm_state    //取消勾选状态
-                                                             select_rpm_flag = !select_rpm_flag;  //标志位也同步改变，防止下次进入时由于标志位未清零而强行改变勾选状态
+                                        case "发动机温度": var cmp_temp_clickedItem2 = Qt.createComponent( "qrc:/Page_data_engine.qml" )
+                                                         var vehicle_page_temp_clickedItem2 = cmp_temp_clickedItem2.createObject( switch_area )
 
-                                                             vehicle_page_rpm_clickedItem2.destroy(); break;   //操作完成后，需要进行销毁释放
+                                                         vehicle_page_temp_clickedItem2.temp_state = !vehicle_page_temp_clickedItem2.temp_state
+                                                         select_temp_flag = !select_temp_flag;
 
-                                            case "发动机档位": var cmp_gear_clickedItem2 = Qt.createComponent( "qrc:/Page_data_engine.qml" )
-                                                             var vehicle_page_gear_clickedItem2 = cmp_gear_clickedItem2.createObject( switch_area )
-
-                                                             vehicle_page_gear_clickedItem2.gear_state = !vehicle_page_gear_clickedItem2.gear_state
-                                                             select_gear_flag = !select_gear_flag;
-
-                                                             vehicle_page_gear_clickedItem2.destroy(); break;
-
-                                            case "发动机温度": var cmp_temp_clickedItem2 = Qt.createComponent( "qrc:/Page_data_engine.qml" )
-                                                             var vehicle_page_temp_clickedItem2 = cmp_temp_clickedItem2.createObject( switch_area )
-
-                                                             vehicle_page_temp_clickedItem2.temp_state = !vehicle_page_temp_clickedItem2.temp_state
-                                                             select_temp_flag = !select_temp_flag;
-
-                                                             vehicle_page_temp_clickedItem2.destroy(); break;
-                                        }
-
-                                        //替换完成后，弹出提示框
-                                        var cmp_item22 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                                        popup_select = cmp_item22.createObject( switch_area,
-                                                                                {
-                                                                                 "list_width" : 400,
-                                                                                 "title"      :"成功替换！",
-                                                                                 "left_tail"  :"",
-                                                                                 "right_tail" :"查看"
-                                                                                });
-
-                                        popup_select.right_tail_clicked.connect( back_page_main_slot );
+                                                         vehicle_page_temp_clickedItem2.destroy(); break;
                                     }
 
-                                    //进入添加功能
-                                    else{
-                                        param_list_model.append({"name": "速度",  "value": 00, "unit": "km/h"})
-
-                                        count_num = count_num + 1
-                                        speed_row_position = count_num
-                                        console.log(speed_row_position)
-
-                                        //添加完成后，弹出提示框
-                                        var cmp_item23 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                                        popup_select = cmp_item23.createObject( switch_area,
-                                                                                {
-                                                                                 "list_width" : 400,
-                                                                                 "title"      :"成功添加！",
-                                                                                 "left_tail"  :"继续添加",
-                                                                                 "right_tail" :"返回主页"
-                                                                                });
-                                        popup_select.left_tail_clicked.connect(  continue_add_slot   );
-                                        popup_select.right_tail_clicked.connect( back_page_main_slot );
-                                    }
-                                }
-                                //未勾选状态，删除显示
-                                else
-                                {
-                                    delete_speed()
+                                    replace_flag = false  //恢复 替换按钮 的标志位
                                 }
 
-                                select_speed()
+                                else{       //进入添加功能
+                                    param_list_model.append({"name": "速度",  "value": 00, "unit": "km/h"})
+
+                                    count_num = count_num + 1
+                                    speed_row_position = count_num
+                                    console.log(speed_row_position)
+                                }
                             }
+                            else
+                            {
+                                delete_speed()
+                            }
+
+                            select_speed()
                         }
                     }
                 }
@@ -551,132 +360,69 @@ Item {
         picked: select_oil_flag   //恢复至上一次退出前的状态
 
         onSimpleButtonClicked: {
-            /**** 特殊处理：在"选择状态"下的 重复勾选 的点击事件 ****/
-            if( select_data_btn_clicked_flag && picked ){
-                //勾选状态下，再次点击 将弹出警告的对话框
-                var cmp_item0 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                popup_select = cmp_item0.createObject( switch_area,
-                                                        {
-                                                         "list_width" : 500,
-                                                         "title"      :"当前项已在首页显示，不可重复添加",
-                                                         "left_tail"  :"查看",
-                                                         "right_tail" :"取消"
-                                                        });
-                popup_select.left_tail_clicked.connect( back_page_main_slot );
-                popup_select.right_tail_clicked.connect( cancel_slot );
+            picked = !picked   //切换选中与未选中的图片标志位
 
-            }
+            if(picked)
+            {
+                if(replace_flag){   //进入替换功能
 
-            /**** 特殊处理：在"替换状态"下的 重复勾选 的点击事件 ****/
-            else if( replace_flag && picked ){
-                //勾选状态下，再次点击 将弹出警告的对话框
-                var cmp_item1 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                popup_select = cmp_item1.createObject( switch_area,
-                                                        {
-                                                         "list_width" : 500,
-                                                         "title"      :"当前项已在首页显示，不可替换",
-                                                         "left_tail"  :"查看",
-                                                         "right_tail" :"取消"
-                                                        });
-                popup_select.left_tail_clicked.connect( back_page_main_slot );
-                popup_select.right_tail_clicked.connect( cancel_slot );
+                    /*** 替换逻辑：删除原内容->原位置插入新内容->修改新内容对应的刷新位置->取消原勾选项->清除替换按钮的标志位 ***/
+                    param_list_model.remove( current_item_row )  //删除 Page_main.qml中当前行的内容
 
-            }
+                    param_list_model.insert( current_item_row, {name: "油量",  value: data_oil_cache, unit: "L"}) //插入新的内容
 
-            /**** 正常的点击事件 ****/
-            else{
+                    oil_row_position = current_item_row  //设置 新内容 的 刷新位置 为原位置，很重要！否则替换后无法刷新 数据
 
-                picked = !picked   //切换选中与未选中的图片标志位
+                    //取消当前行原有的 勾选属性
+                    switch(current_item_name){
+                        case "续航": odom_btn.picked = !odom_btn.picked;
+                                    select_odom_flag = !select_odom_flag;   break;
 
-                //勾选状态
-                if(picked)
-                {
-                    //进入替换功能
-                    if(replace_flag){
+                        case "速度": speed_btn.picked = !speed_btn.picked;
+                                    select_speed_flag = !select_speed_flag; break;
 
-                        /*** 替换逻辑：删除原内容->原位置插入新内容->修改新内容对应的刷新位置->取消原勾选项->清除替换按钮的标志位 ***/
-                        param_list_model.remove( current_item_row )  //删除 Page_main.qml中当前行的内容
+                        case "发动机转速": var cmp_rpm = Qt.createComponent( "qrc:/Page_data_engine.qml" ) //创建组件
+                                         var vehicle_page_rpm = cmp_rpm.createObject( switch_area )  //创建对象
 
-                        param_list_model.insert( current_item_row, {name: "油量",  value: data_oil_cache, unit: "L"}) //插入新的内容
+                                         vehicle_page_rpm.rpm_state = !vehicle_page_rpm.rpm_state    //取消勾选状态
+                                         select_rpm_flag = !select_rpm_flag;  //标志位也同步改变，防止下次进入时由于标志位未清零而强行改变勾选状态
 
-                        oil_row_position = current_item_row  //设置 新内容 的 刷新位置 为原位置，很重要！否则替换后无法刷新 数据
+                                         vehicle_page_rpm.destroy(); break;   //操作完成后，需要进行销毁释放
 
-                        //取消当前行原有的 勾选属性
-                        switch(current_item_name){
-                            case "续航": odom_btn.picked = !odom_btn.picked;
-                                        select_odom_flag = !select_odom_flag;   break;
+                        case "发动机档位": var cmp_gear = Qt.createComponent( "qrc:/Page_data_engine.qml" )
+                                         var vehicle_page_gear = cmp_gear.createObject( switch_area )
 
-                            case "速度": speed_btn.picked = !speed_btn.picked;
-                                        select_speed_flag = !select_speed_flag; break;
+                                         vehicle_page_gear.gear_state = !vehicle_page_gear.gear_state
+                                         select_gear_flag = !select_gear_flag;
 
-                            case "发动机转速": var cmp_rpm = Qt.createComponent( "qrc:/Page_data_engine.qml" ) //创建组件
-                                             var vehicle_page_rpm = cmp_rpm.createObject( switch_area )  //创建对象
+                                         vehicle_page_gear.destroy(); break;
 
-                                             vehicle_page_rpm.rpm_state = !vehicle_page_rpm.rpm_state    //取消勾选状态
-                                             select_rpm_flag = !select_rpm_flag;  //标志位也同步改变，防止下次进入时由于标志位未清零而强行改变勾选状态
+                        case "发动机温度": var cmp_temp = Qt.createComponent( "qrc:/Page_data_engine.qml" )
+                                         var vehicle_page_temp = cmp_temp.createObject( switch_area )
 
-                                             vehicle_page_rpm.destroy(); break;   //操作完成后，需要进行销毁释放
+                                         vehicle_page_temp.temp_state = !vehicle_page_temp.temp_state
+                                         select_temp_flag = !select_temp_flag;
 
-                            case "发动机档位": var cmp_gear = Qt.createComponent( "qrc:/Page_data_engine.qml" )
-                                             var vehicle_page_gear = cmp_gear.createObject( switch_area )
-
-                                             vehicle_page_gear.gear_state = !vehicle_page_gear.gear_state
-                                             select_gear_flag = !select_gear_flag;
-
-                                             vehicle_page_gear.destroy(); break;
-
-                            case "发动机温度": var cmp_temp = Qt.createComponent( "qrc:/Page_data_engine.qml" )
-                                             var vehicle_page_temp = cmp_temp.createObject( switch_area )
-
-                                             vehicle_page_temp.temp_state = !vehicle_page_temp.temp_state
-                                             select_temp_flag = !select_temp_flag;
-
-                                             vehicle_page_temp.destroy(); break;
-                        }
-
-                        //替换完成后，弹出提示框
-                        var cmp_item2 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                        popup_select = cmp_item2.createObject( switch_area,
-                                                                {
-                                                                 "list_width" : 400,
-                                                                 "title"      :"成功替换！",
-                                                                 "left_tail"  :"",
-                                                                 "right_tail" :"查看"
-                                                                });
-
-                        popup_select.right_tail_clicked.connect( back_page_main_slot );
+                                         vehicle_page_temp.destroy(); break;
                     }
 
-                    //进入添加功能
-                    else{
-                        param_list_model.append({"name": "油量",  "value": data_oil_cache, "unit": "L"})
-
-                        count_num = count_num + 1
-                        oil_row_position = count_num
-                        console.log(oil_row_position)
-
-                        //添加完成后，弹出提示框
-                        var cmp_item3 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                        popup_select = cmp_item3.createObject( switch_area,
-                                                                {
-                                                                 "list_width" : 400,
-                                                                 "title"      :"成功添加！",
-                                                                 "left_tail"  :"继续添加",
-                                                                 "right_tail" :"返回主页"
-                                                                });
-                        popup_select.left_tail_clicked.connect(  continue_add_slot   );
-                        popup_select.right_tail_clicked.connect( back_page_main_slot );
-                    }
+                    replace_flag = false  //恢复 替换按钮 的标志位
                 }
 
-                //未勾选状态，删除显示
-                else
-                {
-                    delete_oil()
-                }
+                else{       //进入添加功能
+                    param_list_model.append({"name": "油量",  "value": data_oil_cache, "unit": "L"})
 
-                select_oil()
+                    count_num = count_num + 1
+                    oil_row_position = count_num
+                    console.log(oil_row_position)
+                }
             }
+            else
+            {
+                delete_oil()
+            }
+
+            select_oil()
         }
     }
 
@@ -691,133 +437,70 @@ Item {
         picked: select_odom_flag
 
         onSimpleButtonClicked: {
-            /**** 特殊处理：在"选择状态"下的 重复勾选 的点击事件 ****/
-            if( select_data_btn_clicked_flag && picked ){
-                //勾选状态下，再次点击 将弹出警告的对话框
-                var cmp_item0 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                popup_select = cmp_item0.createObject( switch_area,
-                                                        {
-                                                         "list_width" : 500,
-                                                         "title"      :"当前项已在首页显示，不可重复添加",
-                                                         "left_tail"  :"查看",
-                                                         "right_tail" :"取消"
-                                                        });
-                popup_select.left_tail_clicked.connect( back_page_main_slot );
-                popup_select.right_tail_clicked.connect( cancel_slot );
+            picked = !picked   //切换选中与未选中的图片标志位
 
-            }
+            if(picked)
+            {
+                if(replace_flag){   //进入替换功能
 
-            /**** 特殊处理：在"替换状态"下的 重复勾选 的点击事件 ****/
-            else if( replace_flag && picked ){
-                //勾选状态下，再次点击 将弹出警告的对话框
-                var cmp_item1 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                popup_select = cmp_item1.createObject( switch_area,
-                                                        {
-                                                         "list_width" : 500,
-                                                         "title"      :"当前项已在首页显示，不可替换",
-                                                         "left_tail"  :"查看",
-                                                         "right_tail" :"取消"
-                                                        });
-                popup_select.left_tail_clicked.connect( back_page_main_slot );
-                popup_select.right_tail_clicked.connect( cancel_slot );
+                    /*** 替换逻辑：删除原内容->原位置插入新内容->修改新内容对应的刷新位置->取消原勾选项->清除替换按钮的标志位 ***/
+                    param_list_model.remove( current_item_row )  //删除 Page_main.qml中当前行的内容
 
-            }
+                    param_list_model.insert( current_item_row, {name: "续航",  value: data_odom_cache, unit: "km"}) //插入新的内容
 
-            /**** 正常的点击事件 ****/
-            else{
+                    odom_row_position = current_item_row  //设置 新内容 的 刷新位置 为原位置，很重要！否则替换后无法刷新 数据
 
-                picked = !picked   //切换选中与未选中的图片标志位
+                    //取消当前行原有的 勾选属性
+                    switch(current_item_name){
+                        case "油量": oil_btn.picked = !oil_btn.picked;
+                                         select_oil_flag = !select_oil_flag;   break;
 
-                //勾选状态
-                if(picked)
-                {
-                    //进入替换功能
-                    if(replace_flag){
+                        case "速度": speed_btn.picked = !speed_btn.picked;
+                                         select_speed_flag = !select_speed_flag; break;
 
-                        /*** 替换逻辑：删除原内容->原位置插入新内容->修改新内容对应的刷新位置->取消原勾选项->清除替换按钮的标志位 ***/
-                        param_list_model.remove( current_item_row )  //删除 Page_main.qml中当前行的内容
+                        case "发动机转速": var cmp_rpm = Qt.createComponent( "qrc:/Page_data_engine.qml" ) //创建组件
+                                         var vehicle_page_rpm = cmp_rpm.createObject( switch_area )  //创建对象
 
-                        param_list_model.insert( current_item_row, {name: "续航",  value: data_odom_cache, unit: "km"}) //插入新的内容
+                                         vehicle_page_rpm.rpm_state = !vehicle_page_rpm.rpm_state    //取消勾选状态
+                                         select_rpm_flag = !select_rpm_flag;  //标志位也同步改变，防止下次进入时由于标志位未清零而强行改变勾选状态
 
-                        odom_row_position = current_item_row  //设置 新内容 的 刷新位置 为原位置，很重要！否则替换后无法刷新 数据
+                                         vehicle_page_rpm.destroy(); break;   //操作完成后，需要进行销毁释放
 
-                        //取消当前行原有的 勾选属性
-                        switch(current_item_name){
-                            case "油量": oil_btn.picked = !oil_btn.picked;
-                                             select_oil_flag = !select_oil_flag;   break;
+                        case "发动机档位": var cmp_gear = Qt.createComponent( "qrc:/Page_data_engine.qml" )
+                                         var vehicle_page_gear = cmp_gear.createObject( switch_area )
 
-                            case "速度": speed_btn.picked = !speed_btn.picked;
-                                             select_speed_flag = !select_speed_flag; break;
+                                         vehicle_page_gear.gear_state = !vehicle_page_gear.gear_state
+                                         select_gear_flag = !select_gear_flag;
 
-                            case "发动机转速": var cmp_rpm = Qt.createComponent( "qrc:/Page_data_engine.qml" ) //创建组件
-                                             var vehicle_page_rpm = cmp_rpm.createObject( switch_area )  //创建对象
+                                         vehicle_page_gear.destroy(); break;
 
-                                             vehicle_page_rpm.rpm_state = !vehicle_page_rpm.rpm_state    //取消勾选状态
-                                             select_rpm_flag = !select_rpm_flag;  //标志位也同步改变，防止下次进入时由于标志位未清零而强行改变勾选状态
+                        case "发动机温度": var cmp_temp = Qt.createComponent( "qrc:/Page_data_engine.qml" )
+                                         var vehicle_page_temp = cmp_temp.createObject( switch_area )
 
-                                             vehicle_page_rpm.destroy(); break;   //操作完成后，需要进行销毁释放
+                                         vehicle_page_temp.temp_state = !vehicle_page_temp.temp_state
+                                         select_temp_flag = !select_temp_flag;
 
-                            case "发动机档位": var cmp_gear = Qt.createComponent( "qrc:/Page_data_engine.qml" )
-                                             var vehicle_page_gear = cmp_gear.createObject( switch_area )
-
-                                             vehicle_page_gear.gear_state = !vehicle_page_gear.gear_state
-                                             select_gear_flag = !select_gear_flag;
-
-                                             vehicle_page_gear.destroy(); break;
-
-                            case "发动机温度": var cmp_temp = Qt.createComponent( "qrc:/Page_data_engine.qml" )
-                                             var vehicle_page_temp = cmp_temp.createObject( switch_area )
-
-                                             vehicle_page_temp.temp_state = !vehicle_page_temp.temp_state
-                                             select_temp_flag = !select_temp_flag;
-
-                                             vehicle_page_temp.destroy(); break;
-                        }
-
-                        //替换完成后，弹出提示框
-                        var cmp_item2 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                        popup_select = cmp_item2.createObject( switch_area,
-                                                                {
-                                                                 "list_width" : 400,
-                                                                 "title"      :"成功替换！",
-                                                                 "left_tail"  :"",
-                                                                 "right_tail" :"查看"
-                                                                });
-
-                        popup_select.right_tail_clicked.connect( back_page_main_slot );
+                                         vehicle_page_temp.destroy(); break;
                     }
 
-                    //进入添加功能
-                    else{
-
-                        param_list_model.append({"name": "续航",  "value": data_odom_cache, "unit": "km"})
-
-                        count_num = count_num + 1
-                        odom_row_position = count_num
-                        console.log(odom_row_position)
-
-                        //添加完成后，弹出提示框
-                        var cmp_item3 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                        popup_select = cmp_item3.createObject( switch_area,
-                                                                {
-                                                                 "list_width" : 400,
-                                                                 "title"      :"成功添加！",
-                                                                 "left_tail"  :"继续添加",
-                                                                 "right_tail" :"返回主页"
-                                                                });
-                        popup_select.left_tail_clicked.connect(  continue_add_slot   );
-                        popup_select.right_tail_clicked.connect( back_page_main_slot );
-                    }
+                    replace_flag = false  //恢复 替换按钮 的标志位
                 }
 
-                //未勾选状态，删除显示
-                else
-                {
-                    delete_odom()
-                }
+                else{       //进入添加功能
 
-                select_odom()
+                    param_list_model.append({"name": "续航",  "value": data_odom_cache, "unit": "km"})
+
+                    count_num = count_num + 1
+                    odom_row_position = count_num
+                    console.log(odom_row_position)
+                }
             }
+            else
+            {
+                delete_odom()
+            }
+
+            select_odom()
         }
     }
 
@@ -832,133 +515,70 @@ Item {
         picked: select_speed_flag
 
         onSimpleButtonClicked: {
-            /**** 特殊处理：在"选择状态"下的 重复勾选 的点击事件 ****/
-            if( select_data_btn_clicked_flag && picked ){
-                //勾选状态下，再次点击 将弹出警告的对话框
-                var cmp_item0 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                popup_select = cmp_item0.createObject( switch_area,
-                                                        {
-                                                         "list_width" : 500,
-                                                         "title"      :"当前项已在首页显示，不可重复添加",
-                                                         "left_tail"  :"查看",
-                                                         "right_tail" :"取消"
-                                                        });
-                popup_select.left_tail_clicked.connect( back_page_main_slot );
-                popup_select.right_tail_clicked.connect( cancel_slot );
+            picked = !picked   //切换选中与未选中的图片标志位
 
-            }
+            if(picked)
+            {
+                if(replace_flag){   //进入替换功能
 
-            /**** 特殊处理：在"替换状态"下的 重复勾选 的点击事件 ****/
-            else if( replace_flag && picked ){
-                //勾选状态下，再次点击 将弹出警告的对话框
-                var cmp_item1 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                popup_select = cmp_item1.createObject( switch_area,
-                                                        {
-                                                         "list_width" : 500,
-                                                         "title"      :"当前项已在首页显示，不可替换",
-                                                         "left_tail"  :"查看",
-                                                         "right_tail" :"取消"
-                                                        });
-                popup_select.left_tail_clicked.connect( back_page_main_slot );
-                popup_select.right_tail_clicked.connect( cancel_slot );
+                    /*** 替换逻辑：删除原内容->原位置插入新内容->修改新内容对应的刷新位置->取消原勾选项->清除替换按钮的标志位 ***/
+                    param_list_model.remove( current_item_row )  //删除 Page_main.qml中当前行的内容
 
-            }
+                    param_list_model.insert( current_item_row, {name: "速度",  value: data_speed_cache, unit: "km/h"}) //插入新的内容
 
-            /**** 正常的点击事件 ****/
-            else{
+                    speed_row_position = current_item_row  //设置 新内容 的 刷新位置 为原位置，很重要！否则替换后无法刷新 数据
 
-                picked = !picked   //切换选中与未选中的图片标志位
+                    //取消当前行原有的 勾选属性
+                    switch(current_item_name){
+                        case "油量": oil_btn.picked = !oil_btn.picked;
+                                         select_oil_flag = !select_oil_flag;   break;
 
-                //勾选状态
-                if(picked)
-                {
-                    //进入替换功能
-                    if(replace_flag){
+                        case "续航": odom_btn.picked = !odom_btn.picked;
+                                         select_odom_flag = !select_odom_flag; break;
 
-                        /*** 替换逻辑：删除原内容->原位置插入新内容->修改新内容对应的刷新位置->取消原勾选项->清除替换按钮的标志位 ***/
-                        param_list_model.remove( current_item_row )  //删除 Page_main.qml中当前行的内容
+                        case "发动机转速": var cmp_rpm = Qt.createComponent( "qrc:/Page_data_engine.qml" ) //创建组件
+                                         var vehicle_page_rpm = cmp_rpm.createObject( switch_area )  //创建对象
 
-                        param_list_model.insert( current_item_row, {name: "速度",  value: data_speed_cache, unit: "km/h"}) //插入新的内容
+                                         vehicle_page_rpm.rpm_state = !vehicle_page_rpm.rpm_state    //取消勾选状态
+                                         select_rpm_flag = !select_rpm_flag;  //标志位也同步改变，防止下次进入时由于标志位未清零而强行改变勾选状态
 
-                        speed_row_position = current_item_row  //设置 新内容 的 刷新位置 为原位置，很重要！否则替换后无法刷新 数据
+                                         vehicle_page_rpm.destroy(); break;   //操作完成后，需要进行销毁释放
 
-                        //取消当前行原有的 勾选属性
-                        switch(current_item_name){
-                            case "油量": oil_btn.picked = !oil_btn.picked;
-                                             select_oil_flag = !select_oil_flag;   break;
+                        case "发动机档位": var cmp_gear = Qt.createComponent( "qrc:/Page_data_engine.qml" )
+                                         var vehicle_page_gear = cmp_gear.createObject( switch_area )
 
-                            case "续航": odom_btn.picked = !odom_btn.picked;
-                                             select_odom_flag = !select_odom_flag; break;
+                                         vehicle_page_gear.gear_state = !vehicle_page_gear.gear_state
+                                         select_gear_flag = !select_gear_flag;
 
-                            case "发动机转速": var cmp_rpm = Qt.createComponent( "qrc:/Page_data_engine.qml" ) //创建组件
-                                             var vehicle_page_rpm = cmp_rpm.createObject( switch_area )  //创建对象
+                                         vehicle_page_gear.destroy(); break;
 
-                                             vehicle_page_rpm.rpm_state = !vehicle_page_rpm.rpm_state    //取消勾选状态
-                                             select_rpm_flag = !select_rpm_flag;  //标志位也同步改变，防止下次进入时由于标志位未清零而强行改变勾选状态
+                        case "发动机温度": var cmp_temp = Qt.createComponent( "qrc:/Page_data_engine.qml" )
+                                         var vehicle_page_temp = cmp_temp.createObject( switch_area )
 
-                                             vehicle_page_rpm.destroy(); break;   //操作完成后，需要进行销毁释放
+                                         vehicle_page_temp.temp_state = !vehicle_page_temp.temp_state
+                                         select_temp_flag = !select_temp_flag;
 
-                            case "发动机档位": var cmp_gear = Qt.createComponent( "qrc:/Page_data_engine.qml" )
-                                             var vehicle_page_gear = cmp_gear.createObject( switch_area )
-
-                                             vehicle_page_gear.gear_state = !vehicle_page_gear.gear_state
-                                             select_gear_flag = !select_gear_flag;
-
-                                             vehicle_page_gear.destroy(); break;
-
-                            case "发动机温度": var cmp_temp = Qt.createComponent( "qrc:/Page_data_engine.qml" )
-                                             var vehicle_page_temp = cmp_temp.createObject( switch_area )
-
-                                             vehicle_page_temp.temp_state = !vehicle_page_temp.temp_state
-                                             select_temp_flag = !select_temp_flag;
-
-                                             vehicle_page_temp.destroy(); break;
-                        }
-
-                        //替换完成后，弹出提示框
-                        var cmp_item2 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                        popup_select = cmp_item2.createObject( switch_area,
-                                                                {
-                                                                 "list_width" : 400,
-                                                                 "title"      :"成功替换！",
-                                                                 "left_tail"  :"",
-                                                                 "right_tail" :"查看"
-                                                                });
-
-                        popup_select.right_tail_clicked.connect( back_page_main_slot );
+                                         vehicle_page_temp.destroy(); break;
                     }
 
-                    //进入添加功能
-                    else{
-
-                        param_list_model.append({"name": "速度",  "value": data_speed_cache, "unit": "km/h"})
-
-                        count_num = count_num + 1
-                        speed_row_position = count_num
-                        console.log(speed_row_position)
-
-                        //添加完成后，弹出提示框
-                        var cmp_item3 = Qt.createComponent( "qrc:/Qml_widget/SimpleMessageBox.qml" );
-                        popup_select = cmp_item3.createObject( switch_area,
-                                                                {
-                                                                 "list_width" : 400,
-                                                                 "title"      :"成功添加！",
-                                                                 "left_tail"  :"继续添加",
-                                                                 "right_tail" :"返回主页"
-                                                                });
-                        popup_select.left_tail_clicked.connect(  continue_add_slot   );
-                        popup_select.right_tail_clicked.connect( back_page_main_slot );
-                    }
+                    replace_flag = false  //恢复 替换按钮 的标志位
                 }
 
-                //未勾选状态，删除显示
-                else
-                {
-                    delete_speed()
-                }
+                else{       //进入添加功能
 
-                select_speed()
+                    param_list_model.append({"name": "速度",  "value": data_speed_cache, "unit": "km/h"})
+
+                    count_num = count_num + 1
+                    speed_row_position = count_num
+                    console.log(speed_row_position)
+                }
             }
+            else
+            {
+                delete_speed()
+            }
+
+            select_speed()
         }
     }
 
@@ -991,7 +611,6 @@ Item {
         select_speed_flag = !select_speed_flag
     }
 
-    /********** 槽函数区域：删除功能 **************/
 
     //删除 勾选的油量
     function delete_oil()
@@ -1073,30 +692,5 @@ Item {
             odom_row_position = odom_row_position - 1
         }
     }
-    /************************************************/
 
-    /************ 槽函数区域：提示框的按钮操作 ***********/
-    //取消重复添加的槽函数
-    function cancel_slot(){
-
-        popup_select.destroy()  //选择完成后，销毁提示框
-    }
-
-    //替换完成，返回主界面的槽函数
-    function back_page_main_slot()
-    {
-        popup_select.destroy()  //销毁提示框
-
-        //连续弹出两个页面返回到主页面
-        root_stack.pop()
-        root_stack.pop()
-    }
-
-    //继续操作的槽函数
-    function continue_add_slot(){
-
-        popup_select.destroy()  //销毁提示框,继续添加
-    }
-
-    /************************************************/
 }

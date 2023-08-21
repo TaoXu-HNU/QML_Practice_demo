@@ -57,9 +57,6 @@ Window {
     //点击 替换按钮的标志位
     property bool replace_flag: false
 
-    //点击 选择数据按钮的标志位
-    property bool select_data_btn_clicked_flag: false
-
     //数据源
     Data_source{
         id: data_source
@@ -111,9 +108,7 @@ Window {
                             if( index === 0 )   //第 0 行
                             {
 //                                console.log("Clicked on:", model.name, model.value) //获取当前子项的内容
-                                //获取当前项的行号
                                 current_item_row = index
-
                                 //获取当前项的名称
                                 current_item_name = model.name
                                 console.log(current_item_name)
@@ -127,7 +122,6 @@ Window {
                             }
                             else if( index === 1 )  //第 1 行
                             {
-
                                 current_item_row = index
 
                                 current_item_name = model.name
@@ -284,11 +278,6 @@ Window {
                     str_size: 35
                     btn_str: "选择数据"
                     onBtnclicked: {
-
-                        select_data_btn_clicked_flag = true
-
-                        replace_flag = false  //关闭替换的标志位，防止逻辑冲突
-
                         root_stack.push({item:"qrc:/Page_middleware.qml", Immediate:true, destroyOnPop:true});
                    }
                 }
@@ -341,6 +330,9 @@ Window {
 ////            opacity: 0.2
 //            color: "red"
 //        }
+
+
+
     }
 
     //列表数据
@@ -403,8 +395,6 @@ Window {
     function left_clicked_slot()
     {
         replace_flag = true     //树立替换按钮的 标志位
-
-        select_data_btn_clicked_flag = false  //关闭点击选择数据的标志位，防止逻辑冲突
 
         root_stack.push({item:"qrc:/Page_middleware.qml", Immediate:true, destroyOnPop:true})  //跳转至中间层
 
